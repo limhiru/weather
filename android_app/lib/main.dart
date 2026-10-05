@@ -407,23 +407,24 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: ['clear', 'cloudy', 'rain', 'snow', 'sleet']
-                      .map(
-                        (c) => ActionChip(
-                          avatar: Icon(weatherIcon(c), size: 17),
-                          label: Text(conditionLabel(c)),
-                          onPressed: () {
-                            setState(() {
-                              demo = true;
-                              demoCondition = c;
-                              data = null;
-                            });
-                            Navigator.pop(sheetContext);
-                            refresh();
-                          },
-                        ),
-                      )
-                      .toList(),
+                  children:
+                      ['clear', 'cloudy', 'overcast', 'rain', 'snow', 'sleet']
+                          .map(
+                            (c) => ActionChip(
+                              avatar: Icon(weatherIcon(c), size: 17),
+                              label: Text(conditionLabel(c)),
+                              onPressed: () {
+                                setState(() {
+                                  demo = true;
+                                  demoCondition = c;
+                                  data = null;
+                                });
+                                Navigator.pop(sheetContext);
+                                refresh();
+                              },
+                            ),
+                          )
+                          .toList(),
                 ),
                 if (demo)
                   TextButton(

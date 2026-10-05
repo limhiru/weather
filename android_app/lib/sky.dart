@@ -88,17 +88,66 @@ class SkyPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final wet = ['rain', 'sleet', 'snow'].contains(condition);
+    final cloudy = condition == 'cloudy';
+    final overcast = condition == 'overcast';
+    final rainy = condition == 'rain';
+    final snowy = condition == 'snow';
+    final sleety = condition == 'sleet';
     final colors = night
         ? [
             const Color(0xff0b1534),
-            const Color(0xff23385b),
-            const Color(0xff244f66),
+            overcast
+                ? const Color(0xff26313f)
+                : rainy
+                ? const Color(0xff172b40)
+                : snowy
+                ? const Color(0xff3b4c61)
+                : sleety
+                ? const Color(0xff1c2e43)
+                : cloudy
+                ? const Color(0xff1d2e4b)
+                : const Color(0xff23385b),
+            overcast
+                ? const Color(0xff394653)
+                : rainy
+                ? const Color(0xff1c3d51)
+                : snowy
+                ? const Color(0xff566b7a)
+                : sleety
+                ? const Color(0xff2d4151)
+                : cloudy
+                ? const Color(0xff293e5c)
+                : const Color(0xff244f66),
           ]
-        : wet
+        : overcast
         ? [
-            const Color(0xff20364c),
-            const Color(0xff497b92),
-            const Color(0xff143f5b),
+            const Color(0xff46515e),
+            const Color(0xff77838c),
+            const Color(0xff52616d),
+          ]
+        : rainy
+        ? [
+            const Color(0xff263b50),
+            const Color(0xff55788b),
+            const Color(0xff1d4054),
+          ]
+        : snowy
+        ? [
+            const Color(0xff53677d),
+            const Color(0xff91aabd),
+            const Color(0xff627d92),
+          ]
+        : sleety
+        ? [
+            const Color(0xff34475b),
+            const Color(0xff718b9b),
+            const Color(0xff355669),
+          ]
+        : cloudy
+        ? [
+            const Color(0xff245174),
+            const Color(0xff6590a8),
+            const Color(0xff365c78),
           ]
         : [
             const Color(0xff123f73),
@@ -116,18 +165,43 @@ class SkyPainter extends CustomPainter {
         ).createShader(rect),
     );
     final sun = Offset(size.width * .78, size.height * .16);
+    final glow = overcast
+        ? .025
+        : rainy || sleety
+        ? .055
+        : cloudy
+        ? .13
+        : .3;
+    final pulse = .94 + .06 * math.sin(t * 2 * math.pi);
     canvas.drawCircle(
       sun,
-      150,
+      178 * pulse,
       Paint()
         ..shader = RadialGradient(
           colors: [
-            const Color(0xffc3eeff).withValues(alpha: wet ? .08 : .3),
+            const Color(0xffd8f3ff).withValues(alpha: night ? .09 : glow),
             Colors.transparent,
           ],
-        ).createShader(Rect.fromCircle(center: sun, radius: 150)),
+        ).createShader(Rect.fromCircle(center: sun, radius: 178 * pulse)),
     );
-    if (!wet && condition == 'clear') {
+    if (condition == 'clear' && !night) {
+      canvas.save();
+      canvas.translate(sun.dx, sun.dy);
+      canvas.rotate(t * math.pi * 2);
+      for (var i = 0; i < 12; i++) {
+        canvas.rotate(math.pi / 6);
+        canvas.drawLine(
+          const Offset(0, -53),
+          const Offset(0, -88),
+          Paint()
+            ..color = const Color(0xffffedc2).withValues(alpha: .15 * pulse)
+            ..strokeWidth = 2
+            ..strokeCap = StrokeCap.round,
+        );
+      }
+      canvas.restore();
+    }
+    if (!wet && !overcast && condition == 'clear') {
       canvas.drawCircle(
         sun,
         night ? 23 : 36,
@@ -153,41 +227,109 @@ class SkyPainter extends CustomPainter {
           i % 3 == 0 ? 1.4 : .8,
           Paint()
             ..color = Colors.white.withValues(
-              alpha: .2 + .25 * (1 + math.sin(t * 2 * math.pi + i)) / 2,
+              alpha:
+                  (.2 + .25 * (1 + math.sin(t * 2 * math.pi + i)) / 2) *
+                  (overcast
+                      ? .12
+                      : cloudy
+                      ? .45
+                      : wet
+                      ? .25
+                      : 1),
             ),
         );
       }
     }
-    for (int i = 0; i < 7; i++) {
-      final x = size.width * (i / 5 - .2) + math.sin(t * 2 * math.pi + i) * 28;
-      final y = size.height * (.13 + (i % 3) * .105);
+    final cloudCount = overcast
+        ? 11
+        : cloudy
+        ? 8
+        : 5;
+    for (int i = 0; i < cloudCount; i++) {
+      final drift = overcast
+          ? 12.0
+          : cloudy
+          ? 34.0
+          : 48.0;
+      final x =
+          size.width * (i / (cloudCount - 1) - .15) +
+          math.sin(t * 2 * math.pi + i * .8) * drift;
+      final y =
+          size.height *
+          (overcast ? .15 + (i % 4) * .075 : .13 + (i % 3) * .105);
+      final cloudWidth = overcast
+          ? 285.0
+          : cloudy
+          ? 245.0
+          : 210.0;
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(x, y), width: 230, height: 62),
+        Rect.fromCenter(
+          center: Offset(x, y),
+          width: cloudWidth,
+          height: overcast ? 86 : 62,
+        ),
         Paint()
           ..color = Colors.white.withValues(
-            alpha: condition == 'clear' ? .045 : .12,
+            alpha: overcast
+                ? .24
+                : cloudy
+                ? .17
+                : wet
+                ? .11
+                : .045,
           )
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 28),
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, overcast ? 38 : 28),
       );
     }
     if (wet) {
-      for (int i = 0; i < 65; i++) {
-        final x = ((i * 61.7 + t * 55) % size.width);
-        final y =
-            ((i * 97.3 + t * size.height * (condition == 'snow' ? 2 : 5)) %
-            size.height);
+      final particleCount = snowy
+          ? 58
+          : sleety
+          ? 72
+          : 92;
+      for (int i = 0; i < particleCount; i++) {
+        final fallSpeed = snowy
+            ? 1.25
+            : sleety
+            ? 3.2
+            : 5.2;
+        final windDrift = snowy ? 22 : 8;
+        final x = ((i * 61.7 + t * windDrift * 20) % size.width);
+        final y = ((i * 97.3 + t * size.height * fallSpeed) % size.height);
         final paint = Paint()
-          ..color = Colors.white.withValues(alpha: .15 + (i % 4) * .09)
-          ..strokeWidth = 1.2
+          ..color = Colors.white.withValues(
+            alpha: snowy ? .22 + (i % 4) * .11 : .13 + (i % 4) * .08,
+          )
+          ..strokeWidth = snowy ? 1 : 1.2
           ..strokeCap = StrokeCap.round;
-        if (condition == 'snow' || (condition == 'sleet' && i.isEven)) {
+        if (snowy || (sleety && i.isEven)) {
           canvas.drawCircle(
-            Offset(x + math.sin(t * 2 * math.pi + i) * 12, y),
-            1.5 + i % 3,
+            Offset(x + math.sin(t * 2 * math.pi + i) * windDrift, y),
+            snowy ? 1.5 + i % 3 : 1.5 + i % 2,
             paint,
           );
         } else {
-          canvas.drawLine(Offset(x, y), Offset(x - 4, y + 18 + i % 12), paint);
+          canvas.drawLine(
+            Offset(x, y),
+            Offset(x - (rainy ? 7 : 4), y + (rainy ? 24 : 18) + i % 12),
+            paint,
+          );
+        }
+      }
+      if (rainy || sleety) {
+        for (int i = 0; i < 7; i++) {
+          final x =
+              size.width * (.08 + i * .14) + math.sin(t * 2 * math.pi + i) * 12;
+          final phase = (t * 1.8 + i * .17) % 1;
+          final radius = 4 + phase * 20;
+          final center = Offset(x, size.height * (.83 + phase * .1));
+          canvas.drawOval(
+            Rect.fromCenter(center: center, width: radius * 1.7, height: 3),
+            Paint()
+              ..color = Colors.white.withValues(alpha: (1 - phase) * .18)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 1,
+          );
         }
       }
     }
