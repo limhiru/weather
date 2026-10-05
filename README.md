@@ -4,7 +4,7 @@
 
 **Power by 기상청** · [기상청 단기예보 조회서비스](https://www.data.go.kr/data/15084084/openapi.do)
 
-- **Android:** Flutter / Dart, Pretendard Variable 글꼴, 흐린 유리 카드, Canvas 날씨·물방울 애니메이션
+- **Android:** Flutter / Dart, Pretendard Variable 글꼴, Cupertino iPhone 스타일 아이콘, 흐린 유리 카드, Canvas 날씨·물방울 애니메이션
 - **iPhone:** Swift / SwiftUI, iOS 26+ 네이티브 Liquid Glass 컨트롤, iOS 17+ 반투명 머티리얼 대체 구현
 - **데이터:** 기상청 초단기실황·초단기예보 + 단기예보. 기기에서 직접 연결하거나 선택적으로 서버 사용
 - **화면:** 국내 12개 도시 검색, 현재 위치, 현재 기온, 6시간 갱신 초단기예보, 24시간 시간별·날짜별 예보(요일 포함), 습도, 풍향·풍속, 강수량·강수확률, 적설·파고·낙뢰(제공 시)

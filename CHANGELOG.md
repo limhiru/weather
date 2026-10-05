@@ -1,5 +1,10 @@
 # 변경 기록
 
+## 1.0.11
+
+- Android의 Material 아이콘을 Cupertino 아이콘으로 교체해 iPhone 스타일로 통일.
+- 맑음·구름·비·눈·진눈깨비 상태별 기상 아이콘과 탐색·설정·위치·시간·강수 아이콘을 적용.
+
 ## 1.0.10
 
 - Android 전체 글꼴을 Pretendard Variable로 변경해 iPhone San Francisco에 가까운 한글·숫자 인상을 적용.

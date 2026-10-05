@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -40,11 +41,12 @@ class WeatherApp extends StatelessWidget {
 }
 
 IconData weatherIcon(String condition) => switch (condition) {
-  'rain' => Icons.water_drop_rounded,
-  'snow' => Icons.ac_unit_rounded,
-  'sleet' => Icons.grain_rounded,
-  'cloudy' || 'overcast' => Icons.cloud_rounded,
-  _ => Icons.wb_sunny_rounded,
+  'rain' => CupertinoIcons.cloud_rain_fill,
+  'snow' => CupertinoIcons.cloud_snow_fill,
+  'sleet' => CupertinoIcons.cloud_sleet_fill,
+  'cloudy' => CupertinoIcons.cloud_sun_fill,
+  'overcast' => CupertinoIcons.cloud_fill,
+  _ => CupertinoIcons.sun_max_fill,
 };
 
 class WeatherHome extends StatefulWidget {
@@ -240,7 +242,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                     TextField(
                       onChanged: (v) => setModal(() => query = v),
                       decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.search),
+                        prefixIcon: Icon(CupertinoIcons.search),
                         hintText: '도시 검색',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(22)),
@@ -248,7 +250,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                       ),
                     ),
                     ListTile(
-                      leading: const Icon(Icons.near_me_outlined),
+                      leading: const Icon(CupertinoIcons.location_fill),
                       title: const Text('현재 위치 사용'),
                       onTap: locate,
                     ),
@@ -265,7 +267,9 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                                 title: Text(p.name),
                                 subtitle: Text(p.region),
                                 trailing: place.name == p.name
-                                    ? const Icon(Icons.check_circle_outline)
+                                    ? const Icon(
+                                        CupertinoIcons.checkmark_circle_fill,
+                                      )
                                     : null,
                                 onTap: () {
                                   Navigator.pop(context);
@@ -499,7 +503,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.water_drop_outlined, size: 22),
+                      const Icon(CupertinoIcons.drop, size: 22),
                       const SizedBox(width: 8),
                       const Text(
                         '물결',
@@ -513,12 +517,12 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                       IconButton(
                         tooltip: '도시 선택',
                         onPressed: citySheet,
-                        icon: const Icon(Icons.location_city_rounded),
+                        icon: const Icon(CupertinoIcons.building_2_fill),
                       ),
                       IconButton(
                         tooltip: '설정',
                         onPressed: settings,
-                        icon: const Icon(Icons.tune_rounded),
+                        icon: const Icon(CupertinoIcons.slider_horizontal_3),
                       ),
                     ],
                   ),
@@ -547,7 +551,10 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                               color: Colors.white,
                             ),
                           ),
-                          const Icon(Icons.expand_more, color: Colors.white70),
+                          const Icon(
+                            CupertinoIcons.chevron_down,
+                            color: Colors.white70,
+                          ),
                         ],
                       ),
                     ),
@@ -591,7 +598,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                   if (weather == null && !loading) ...[
                     const SizedBox(height: 60),
                     const Icon(
-                      Icons.water_drop_outlined,
+                      CupertinoIcons.drop,
                       size: 70,
                       color: Color(0xffb3e6ff),
                     ),
@@ -686,8 +693,8 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                         children: [
                           Icon(
                             umbrellaNeeded
-                                ? Icons.umbrella_rounded
-                                : Icons.wb_sunny_outlined,
+                                ? CupertinoIcons.umbrella_fill
+                                : CupertinoIcons.sun_max,
                             color: const Color(0xffb6e3fb),
                           ),
                           const SizedBox(width: 12),
@@ -724,7 +731,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           sectionTitle(
-                            Icons.schedule,
+                            CupertinoIcons.clock,
                             '시간별 예보',
                             '24시간 · 날짜별 3일',
                           ),
@@ -827,7 +834,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                       child: Column(
                         children: [
                           sectionTitle(
-                            Icons.calendar_today_outlined,
+                            CupertinoIcons.calendar_today,
                             '날짜별 예보',
                             '기상청 최저·최고',
                           ),
@@ -909,7 +916,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                       children: [
                         Expanded(
                           child: metric(
-                            Icons.water_drop_outlined,
+                            CupertinoIcons.drop,
                             '습도',
                             numberText(weather.current['humidity'], '%'),
                             '공기 속 수분',
@@ -918,7 +925,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                         const SizedBox(width: 14),
                         Expanded(
                           child: metric(
-                            Icons.air_rounded,
+                            CupertinoIcons.wind,
                             '바람',
                             weather.current['windSpeed'] == null
                                 ? '—'
@@ -933,7 +940,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                       child: Row(
                         children: [
                           const Icon(
-                            Icons.water_drop_outlined,
+                            CupertinoIcons.drop,
                             color: Color(0xffb6e3fb),
                           ),
                           const SizedBox(width: 14),
@@ -953,7 +960,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                       child: Row(
                         children: [
                           const Icon(
-                            Icons.umbrella_outlined,
+                            CupertinoIcons.umbrella,
                             color: Color(0xffb6e3fb),
                           ),
                           const SizedBox(width: 14),
