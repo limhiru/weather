@@ -33,7 +33,7 @@ void main() {
   testWidgets('first launch shows setup; preview and city choice work', (
     tester,
   ) async {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'endpoint': ''});
     await tester.pumpWidget(const WeatherApp());
     await tester.pump();
     expect(find.text('기상청 날씨 연결'), findsOneWidget);
@@ -67,7 +67,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'endpoint': ''});
     await tester.pumpWidget(const WeatherApp());
     await tester.pump();
     await tester.ensureVisible(find.text('먼저 둘러보기'));

@@ -2,6 +2,8 @@
 
 기상청 날씨를 물방울 같은 화면으로 만나는 **Flutter Android + SwiftUI iPhone** 앱.
 
+**Power by 기상청** · [기상청 단기예보 조회서비스](https://www.data.go.kr/data/15084084/openapi.do)
+
 - **Android:** Flutter / Dart, 흐린 유리 카드, Canvas 날씨·물방울 애니메이션
 - **iPhone:** Swift / SwiftUI, iOS 26+ 네이티브 Liquid Glass 컨트롤, iOS 17+ 반투명 머티리얼 대체 구현
 - **데이터:** 기상청 초단기실황 + 단기예보. 서버에만 인증키 보관
@@ -56,7 +58,7 @@ flutter pub get
 flutter run --dart-define=WEATHER_API_URL=http://10.0.2.2:8080
 ```
 
-Android 에뮬레이터에서 `10.0.2.2`는 개발 Mac을 가리킵니다. USB로 연결한 실제 Android 기기는 `adb reverse tcp:8080 tcp:8080` 후 `http://127.0.0.1:8080`을 사용하거나 HTTPS 서버를 연결합니다. 로컬 HTTP는 Debug 빌드에서만 허용됩니다.
+개발용 Debug 빌드는 로컬 날씨 서버를 기본으로 연결합니다. Android 에뮬레이터에서 `10.0.2.2`는 개발 Mac을 가리킵니다. USB로 연결한 실제 Android 기기는 `adb reverse tcp:8080 tcp:8080` 후 `http://127.0.0.1:8080`을 사용하거나 HTTPS 서버를 연결합니다. 로컬 HTTP는 Debug 빌드에서만 허용됩니다.
 
 ```sh
 flutter build apk --debug
@@ -71,7 +73,7 @@ flutter build apk --debug
 
 - 최소 iOS 17.0. Xcode 16에서도 머티리얼 대체 구현으로 빌드할 수 있습니다.
 - 네이티브 `glassEffect`는 Xcode 26+ SDK / Swift 6.2+ 컴파일러와 iOS 26+에서 활성화됩니다.
-- 앱 설정에 HTTPS 서버 주소를 입력합니다. Debug 시뮬레이터에서 로컬 개발에는 `http://localhost:8080`을 사용합니다.
+- 앱 설정에 HTTPS 서버 주소를 입력합니다. Debug 시뮬레이터에서는 로컬 서버 `http://localhost:8080`이 기본 주소입니다.
 - 실기기 설치/배포는 Xcode Signing & Capabilities에서 본인의 Apple 개발 팀을 지정합니다.
 - Xcode 프로젝트는 저장소에 포함되어 있으며, 명세를 수정할 때만 `xcodegen generate --spec ios_app/project.yml`로 재생성합니다.
 

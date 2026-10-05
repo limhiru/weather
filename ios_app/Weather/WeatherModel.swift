@@ -119,7 +119,11 @@ func validEndpoint(_ string: String) -> Bool {
     private var locationTimeout: Task<Void, Never>?
     override init() {
         place = Place.cities.first(where: { $0.name == UserDefaults.standard.string(forKey: "city") }) ?? Place.cities[0]
+        #if DEBUG
+        endpoint = UserDefaults.standard.string(forKey: "endpoint") ?? "http://localhost:8080"
+        #else
         endpoint = UserDefaults.standard.string(forKey: "endpoint") ?? ""
+        #endif
         super.init()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyKilometer

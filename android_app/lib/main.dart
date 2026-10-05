@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
@@ -54,7 +55,10 @@ class WeatherHome extends StatefulWidget {
 class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
   Place place = places.first;
   WeatherData? data;
-  String endpoint = const String.fromEnvironment('WEATHER_API_URL');
+  String endpoint = const String.fromEnvironment(
+    'WEATHER_API_URL',
+    defaultValue: kDebugMode ? 'http://10.0.2.2:8080' : '',
+  );
   String? error;
   bool loading = false, demo = false;
   String demoCondition = 'clear';
@@ -381,7 +385,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                   ),
                 const SizedBox(height: 22),
                 const Text(
-                  '물결 날씨 · $appVersion\n데이터 출처: 기상청 · 대한민국 단기예보',
+                  '물결 날씨 · $appVersion\nPower by 기상청 · 대한민국 단기예보',
                   style: TextStyle(
                     color: Colors.white54,
                     fontSize: 12,
@@ -797,6 +801,13 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                       ),
                     ),
                   ],
+                  const SizedBox(height: 20),
+                  const Center(
+                    child: Text(
+                      'Power by 기상청',
+                      style: TextStyle(fontSize: 11, color: Colors.white60),
+                    ),
+                  ),
                 ],
               ),
             ),
