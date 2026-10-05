@@ -11,7 +11,7 @@
 - **모션:** 낮/밤 하늘, 햇빛/달빛, 구름, 비, 눈, 진눈깨비, 물방울 하이라이트. 시스템 동작 줄이기 지원
 - **버전:** `VERSION`을 기준으로 최초 커밋 `1.0.0`, 이후 커밋마다 패치 +1, `vX.Y.Z` 태그
 
-> 인증키가 없어도 앱의 **먼저 둘러보기 / 설정 → 디자인 미리보기**에서 디자인을 확인할 수 있습니다. 미리보기에는 ‘실제 날씨 아님’이 표시됩니다. 실제 날씨는 API 인증키 등록과 서버 연결 후에만 나옵니다.
+> 인증키가 없어도 앱의 **먼저 둘러보기 / 설정 → 디자인 미리보기**에서 디자인을 확인할 수 있습니다. 미리보기에는 ‘실제 날씨 아님’이 표시됩니다. 실제 날씨를 보려면 설정에 기상청 일반 인증키(Decoding)를 입력하세요. 키는 Android 보안 저장소 또는 iPhone Keychain에 저장되며, 서버 없이 휴대폰에서 직접 연결합니다.
 
 <img src="docs/android-preview.png" alt="물결 날씨 Flutter 미리보기 — 예시 데이터" width="320">
 
@@ -31,7 +31,7 @@ scripts/        버전 동기화, Git hooks 설정, 원본 아이콘 생성 코�
 1. [공공데이터포털의 기상청_단기예보 조회서비스](https://www.data.go.kr/data/15084084/openapi.do)에 로그인합니다.
 2. **활용신청**을 누르고 개발계정을 신청합니다.
 3. 승인된 서비스의 **일반 인증키(Decoding)**를 확인합니다. 이 앱은 API허브의 `authKey`가 아닌 공공데이터포털 `serviceKey`를 사용합니다.
-4. 아래처럼 로컬 설정을 만들고, `KMA_SERVICE_KEY=` 뒤에 키를 입력합니다. `.env`는 Git 및 Docker 빌드에서 제외됩니다. 키를 커밋하거나 앱에 넣지 마세요.
+4. 승인된 **일반 인증키(Decoding)**를 앱 설정의 인증키 칸에 입력합니다. 앱은 Android 보안 저장소 또는 iPhone Keychain에 저장하고 기기에서 기상청으로 직접 요청합니다. 서버를 따로 운영한다면 아래 선택 절차를 이용하세요. 키를 GitHub에 올리지 마세요.
 
 ```sh
 cp server/.env.example server/.env
@@ -60,7 +60,7 @@ python3 scripts/local_server.py status
 
 ## 2. Android 실행
 
-Flutter 3.44.1 / Dart 3.12 / JDK 21 / Android SDK가 기준입니다.
+Flutter 3.44.1 / Dart 3.12 / JDK 21 / Android SDK가 기준입니다. 앱 설정에서 기상청 일반 인증키를 입력하면 서버 주소 없이 휴대폰에서 직접 연결합니다.
 
 ```sh
 cd android_app
@@ -68,7 +68,7 @@ flutter pub get
 flutter run --dart-define=WEATHER_API_URL=http://10.0.2.2:8080
 ```
 
-개발용 Debug 빌드는 로컬 날씨 서버를 기본으로 연결합니다. Android 에뮬레이터에서 `10.0.2.2`는 개발 Mac을 가리킵니다. USB로 연결한 실제 Android 기기는 `adb reverse tcp:8080 tcp:8080` 후 `http://127.0.0.1:8080`을 사용하거나 HTTPS 서버를 연결합니다. 로컬 HTTP는 Debug 빌드에서만 허용됩니다.
+기상청 인증키를 앱 설정에 저장하면 직접 연결이 우선됩니다. 앱 설정에서 인증키를 비우고 HTTPS 서버 주소를 입력하면 자체 서버를 사용할 수 있습니다. Debug 빌드는 개발용 로컬 주소도 지원합니다.
 
 ```sh
 flutter build apk --debug
@@ -83,7 +83,7 @@ flutter build apk --debug
 
 - 최소 iOS 17.0. Xcode 16에서도 머티리얼 대체 구현으로 빌드할 수 있습니다.
 - 네이티브 `glassEffect`는 Xcode 26+ SDK / Swift 6.2+ 컴파일러와 iOS 26+에서 활성화됩니다.
-- 앱 설정에 HTTPS 서버 주소를 입력합니다. Debug 시뮬레이터에서는 로컬 서버 `http://localhost:8080`이 기본 주소입니다.
+- 앱 설정에서 기상청 일반 인증키(Decoding)를 입력하면 서버 없이 직접 연결합니다. 키는 Keychain에 저장됩니다. 또는 인증키 없이 HTTPS 서버 주소를 입력할 수 있습니다.
 - 실기기 설치/배포는 Xcode Signing & Capabilities에서 본인의 Apple 개발 팀을 지정합니다.
 - Xcode 프로젝트는 저장소에 포함되어 있으며, 명세를 수정할 때만 `xcodegen generate --spec ios_app/project.yml`로 재생성합니다.
 

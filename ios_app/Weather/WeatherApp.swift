@@ -126,19 +126,27 @@ struct SettingsSheet: View {
     @ObservedObject var store: WeatherStore
     @Environment(\.dismiss) private var dismiss
     @State private var endpoint = ""
+    @State private var apiKey = ""
     @State private var invalid = false
     var body: some View {
         NavigationStack {
             Form {
-                Section { TextField("https://weather.example.com",text:$endpoint).keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    if invalid { Text("HTTPS 주소 또는 로컬 개발 서버 주소를 입력해 주세요.").font(.caption).foregroundStyle(.orange) }
-                    Button("저장하고 기상청 날씨 보기") { let address = endpoint.trimmingCharacters(in:.whitespacesAndNewlines); guard validEndpoint(address) else { invalid = true; return }; dismiss(); Task { await store.connect(address) } }
-                } header: { Text("날씨 서버 주소") } footer: { Text("기상청 인증키는 서버에서만 보관해요. 배포한 서버의 HTTPS 주소를 입력해 주세요.") }
+                Section {
+                    SecureField("일반 인증키 (Decoding)", text:$apiKey).textInputAutocapitalization(.never).autocorrectionDisabled()
+                    TextField("HTTPS 서버 주소 (선택)",text:$endpoint).keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
+                    if invalid { Text("기상청 인증키 또는 올바른 HTTPS 서버 주소를 입력해 주세요.").font(.caption).foregroundStyle(.orange) }
+                    Button("저장하고 기상청 날씨 보기") {
+                        let address = endpoint.trimmingCharacters(in:.whitespacesAndNewlines), key = apiKey.trimmingCharacters(in:.whitespacesAndNewlines)
+                        guard (!address.isEmpty && validEndpoint(address)) || !key.isEmpty else { invalid = true; return }
+                        guard key.isEmpty || (key.count >= 20 && !key.contains(where: \.isWhitespace)) else { invalid = true; return }
+                        dismiss(); Task { await store.configure(endpoint:address,apiKey:key) }
+                    }
+                } header: { Text("휴대폰에서 직접 연결") } footer: { Text("인증키를 입력하면 서버 없이 기상청에 직접 연결해요. 키는 이 기기의 Keychain에 저장됩니다. 기상청 활용 신청 승인 후 일반 인증키(Decoding)를 사용하세요.") }
                 Section { ForEach(Sky.allCases,id:\.rawValue) { sky in Button { dismiss(); Task { await store.preview(sky) } } label: { Label(sky.title,systemImage:sky.symbol) } }
                     if store.demo != nil { Button("미리보기 종료") { dismiss(); Task { await store.preview(nil) } } }
                 } header: { Text("디자인 미리보기") } footer: { Text("미리보기의 날씨는 실제 관측값이 아닌 예시예요.") }
                 Section { LabeledContent("버전",value:Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"); Text("Power by 기상청 · 대한민국 단기예보").font(.footnote); Link("기상청 API 인증키 발급 안내",destination:URL(string:"https://www.data.go.kr/data/15084084/openapi.do")!) }
-            }.navigationTitle("설정").toolbar { ToolbarItem(placement:.topBarTrailing) { Button("완료") { dismiss() } } }.onAppear { endpoint = store.endpoint }
+            }.navigationTitle("설정").toolbar { ToolbarItem(placement:.topBarTrailing) { Button("완료") { dismiss() } } }.onAppear { endpoint = store.endpoint; apiKey = store.apiKey }
         }
     }
 }

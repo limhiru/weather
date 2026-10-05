@@ -59,6 +59,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
     'WEATHER_API_URL',
     defaultValue: kDebugMode ? 'http://10.0.2.2:8080' : '',
   );
+  String apiKey = '';
   String? error;
   bool loading = false, demo = false;
   String demoCondition = 'clear';
@@ -85,11 +86,13 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
 
   Future<void> restore() async {
     final prefs = await SharedPreferences.getInstance();
+    final savedKey = await WeatherApi.credentials.read(key: 'kma_service_key');
     if (!mounted) {
       return;
     }
     setState(() {
       endpoint = prefs.getString('endpoint') ?? endpoint;
+      apiKey = savedKey ?? '';
       place = places.firstWhere(
         (p) => p.name == prefs.getString('city'),
         orElse: () => places.first,
@@ -108,7 +111,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
       });
       return;
     }
-    if (endpoint.isEmpty) {
+    if (endpoint.isEmpty && apiKey.isEmpty) {
       setState(() {
         data = null;
         error = null;
@@ -121,7 +124,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
       error = null;
     });
     try {
-      final result = await WeatherApi().fetch(endpoint, place);
+      final result = await WeatherApi().fetch(endpoint, place, apiKey: apiKey);
       if (mounted && request == generation) {
         setState(() => data = result);
       }
@@ -272,6 +275,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
 
   void settings() {
     final controller = TextEditingController(text: endpoint);
+    final keyController = TextEditingController(text: apiKey);
     String? validation;
     showModalBottomSheet(
       context: context,
@@ -295,7 +299,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  '기상청 인증키는 서버에서만 보관해요.\n배포한 날씨 서버의 HTTPS 주소를 입력해 주세요.',
+                  '기상청 인증키를 입력하면 서버 없이 휴대폰에서 직접 불러와요.\n인증키는 기기의 보안 저장소에 보관됩니다. HTTPS 서버도 사용할 수 있어요.',
                   style: TextStyle(color: Colors.white70, height: 1.6),
                 ),
                 const SizedBox(height: 20),
@@ -313,22 +317,51 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                   ),
                 ),
                 const SizedBox(height: 12),
+                TextField(
+                  controller: keyController,
+                  obscureText: true,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  decoration: const InputDecoration(
+                    labelText: '기상청 일반 인증키 (Decoding)',
+                    hintText: '이 휴대폰에 안전하게 저장',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(18)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 FilledButton(
                   onPressed: () async {
                     final value = controller.text.trim();
-                    if (!validEndpoint(value)) {
+                    final secret = keyController.text.trim();
+                    if (value.isNotEmpty && !validEndpoint(value)) {
                       setModal(
                         () => validation = 'HTTPS 주소 또는 로컬 개발 서버 주소를 입력해 주세요.',
                       );
                       return;
                     }
+                    if (secret.isEmpty && value.isEmpty) {
+                      setModal(() => validation = '기상청 인증키 또는 날씨 서버 주소를 입력해 주세요.');
+                      return;
+                    }
+                    if (secret.isNotEmpty && (secret.length < 20 || secret.contains(RegExp(r'\s')))) {
+                      setModal(() => validation = '기상청 일반 인증키를 확인해 주세요.');
+                      return;
+                    }
                     final prefs = await SharedPreferences.getInstance();
                     await prefs.setString('endpoint', value);
+                    if (secret.isEmpty) {
+                      await WeatherApi.credentials.delete(key: 'kma_service_key');
+                    } else {
+                      await WeatherApi.credentials.write(key: 'kma_service_key', value: secret);
+                    }
                     if (!mounted || !sheetContext.mounted) {
                       return;
                     }
                     setState(() {
                       endpoint = value;
+                      apiKey = secret;
                       demo = false;
                       data = null;
                     });
