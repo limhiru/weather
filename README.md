@@ -48,6 +48,16 @@ curl 'http://127.0.0.1:8080/v1/weather?lat=37.5665&lon=126.978'
 
 인증키가 없으면 `503`과 설정 안내를 반환합니다. 인증키/활용승인/할당량 오류는 실제 날씨나 예시 데이터로 위장하지 않습니다.
 
+Mac에서 앱을 계속 사용할 때는 로컬 서버를 로그인 시 자동 시작하도록 등록할 수 있습니다. 설치 명령은 `server/.env`를 개인용 Application Support 폴더에 복사해 권한을 제한합니다. GitHub에는 복사된 키가 올라가지 않습니다.
+
+```sh
+python3 scripts/local_server.py install
+python3 scripts/local_server.py status
+# 중지·등록 해제: python3 scripts/local_server.py remove
+```
+
+서버 소스나 인증키를 바꿨다면 `install`을 다시 실행해 로컬 서비스를 갱신하세요.
+
 ## 2. Android 실행
 
 Flutter 3.44.1 / Dart 3.12 / JDK 21 / Android SDK가 기준입니다.
