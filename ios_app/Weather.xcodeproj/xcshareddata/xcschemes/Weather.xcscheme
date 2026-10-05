@@ -21,6 +21,20 @@
                ReferencedContainer = "container:Weather.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "51626381CC57D28CC894712D"
+               BuildableName = "WeatherWidget.appex"
+               BlueprintName = "WeatherWidget"
+               ReferencedContainer = "container:Weather.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction

@@ -127,6 +127,18 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
       final result = await WeatherApi().fetch(endpoint, place, apiKey: apiKey);
       if (mounted && request == generation) {
         setState(() => data = result);
+        final widgetData = <String, dynamic>{
+          'city': place.name,
+          'current': result.json['current'],
+          'isDemo': result.isDemo,
+        };
+        try {
+          await const MethodChannel(
+            'com.limhiru.weather/widget',
+          ).invokeMethod<void>('update', widgetData);
+        } on PlatformException {
+          /* Keep the fresh weather even if the launcher is refreshing. */
+        }
       }
     } catch (e) {
       if (mounted && request == generation) {
@@ -342,19 +354,28 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                       return;
                     }
                     if (secret.isEmpty && value.isEmpty) {
-                      setModal(() => validation = '기상청 인증키 또는 날씨 서버 주소를 입력해 주세요.');
+                      setModal(
+                        () => validation = '기상청 인증키 또는 날씨 서버 주소를 입력해 주세요.',
+                      );
                       return;
                     }
-                    if (secret.isNotEmpty && (secret.length < 20 || secret.contains(RegExp(r'\s')))) {
+                    if (secret.isNotEmpty &&
+                        (secret.length < 20 ||
+                            secret.contains(RegExp(r'\s')))) {
                       setModal(() => validation = '기상청 일반 인증키를 확인해 주세요.');
                       return;
                     }
                     final prefs = await SharedPreferences.getInstance();
                     await prefs.setString('endpoint', value);
                     if (secret.isEmpty) {
-                      await WeatherApi.credentials.delete(key: 'kma_service_key');
+                      await WeatherApi.credentials.delete(
+                        key: 'kma_service_key',
+                      );
                     } else {
-                      await WeatherApi.credentials.write(key: 'kma_service_key', value: secret);
+                      await WeatherApi.credentials.write(
+                        key: 'kma_service_key',
+                        value: secret,
+                      );
                     }
                     if (!mounted || !sheetContext.mounted) {
                       return;

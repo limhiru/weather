@@ -2,6 +2,7 @@ import Foundation
 import CoreLocation
 import SwiftUI
 import Security
+import WidgetKit
 
 struct Place: Identifiable, Equatable {
     let name: String
@@ -221,6 +222,20 @@ enum DirectKMA {
     }
 }
 
+enum WeatherWidgetCache {
+    static let group = "group.com.limhiru.weather"
+    static func save(_ weather: WeatherSnapshot, place: Place) {
+        guard let defaults = UserDefaults(suiteName: group) else { return }
+        defaults.set(place.name, forKey: "widget.city")
+        if let temperature = weather.current.temperature {
+            defaults.set(String(format: "%.0f°", temperature), forKey: "widget.temperature")
+        } else { defaults.removeObject(forKey: "widget.temperature") }
+        defaults.set(weather.current.condition.rawValue, forKey: "widget.condition")
+        defaults.set(weather.observedAt, forKey: "widget.updated")
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+}
+
 @MainActor final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var place: Place
     @Published var weather: WeatherSnapshot?
@@ -285,7 +300,7 @@ enum DirectKMA {
         if !apiKey.isEmpty {
             loading = true
             defer { if requestID == generation { loading = false } }
-            do { let snapshot = try await DirectKMA.fetch(key: apiKey, place: place); if requestID == generation { weather = snapshot } }
+            do { let snapshot = try await DirectKMA.fetch(key: apiKey, place: place); if requestID == generation { weather = snapshot; WeatherWidgetCache.save(snapshot, place: place) } }
             catch { if requestID == generation { self.error = error.localizedDescription } }
             return
         }
@@ -303,7 +318,9 @@ enum DirectKMA {
                 error = body?["error"] ?? "날씨를 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요."
                 return
             }
-            weather = try JSONDecoder().decode(WeatherSnapshot.self, from: data)
+            let snapshot = try JSONDecoder().decode(WeatherSnapshot.self, from: data)
+            weather = snapshot
+            WeatherWidgetCache.save(snapshot, place: place)
         } catch {
             if requestID == generation { self.error = "서버에 연결할 수 없어요. 주소와 네트워크를 확인해 주세요." }
         }

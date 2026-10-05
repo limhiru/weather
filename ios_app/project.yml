@@ -6,8 +6,8 @@ options:
 settings:
   base:
     SWIFT_VERSION: '5.0'
-    MARKETING_VERSION: '1.0.4'
-    CURRENT_PROJECT_VERSION: '5'
+    MARKETING_VERSION: '1.0.5'
+    CURRENT_PROJECT_VERSION: '6'
     ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     GENERATE_INFOPLIST_FILE: YES
     CODE_SIGN_STYLE: Automatic
@@ -29,7 +29,24 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.limhiru.weather
+        CODE_SIGN_ENTITLEMENTS: Weather/Weather.entitlements
         TARGETED_DEVICE_FAMILY: '1,2'
+    dependencies:
+      - target: WeatherWidget
+        embed: true
+  WeatherWidget:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: '17.0'
+    sources:
+      - WeatherWidget
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.limhiru.weather.widget
+        CODE_SIGN_ENTITLEMENTS: WeatherWidget/WeatherWidget.entitlements
+        APPLICATION_EXTENSION_API_ONLY: YES
+        TARGETED_DEVICE_FAMILY: '1,2'
+        INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier: com.apple.widgetkit-extension
   WeatherTests:
     type: bundle.unit-test
     platform: iOS
@@ -42,6 +59,7 @@ schemes:
     build:
       targets:
         Weather: all
+        WeatherWidget: all
     test:
       targets:
         - WeatherTests
