@@ -51,31 +51,56 @@ struct WeatherView: View {
             Text("오늘의 하늘을,\n한 방울에.").font(.system(size:34,weight:.light)).multilineTextAlignment(.center)
             LiquidCard { VStack(spacing:14) {
                 Text("기상청 날씨 연결").font(.title3.weight(.semibold))
-                Text("서버를 연결하면 지금의 기온과\n시간별 예보를 함께 볼 수 있어요.").font(.subheadline).lineSpacing(5).multilineTextAlignment(.center).foregroundStyle(.white.opacity(0.65))
+                Text("기상청 인증키를 입력하면 지금의 기온과\n자세한 예보를 볼 수 있어요.").font(.subheadline).lineSpacing(5).multilineTextAlignment(.center).foregroundStyle(.white.opacity(0.65))
                 Button("연결 설정하기") { settings = true }.buttonStyle(.borderedProminent).tint(.cyan.opacity(0.65))
                 Button("먼저 둘러보기") { Task { await store.preview(.clear) } }.tint(.white)
             }.frame(maxWidth:.infinity) }
         }
     }
     @ViewBuilder private func weatherContent(_ weather: WeatherSnapshot) -> some View {
+        let nextHours = Array(weather.hourly.prefix(6))
+        let rainPeak = nextHours.compactMap(\.precipitationProbability).max()
+        let rainSoon = nextHours.contains { $0.condition.wet || ($0.precipitationAmount != nil && $0.precipitationAmount != "없음") }
+        let umbrellaNeeded = (rainPeak ?? 0) >= 50 || rainSoon
         VStack(spacing:7) {
             Text(value(weather.current.temperature,"°")).font(.system(size:112,weight:.ultraLight,design:.rounded)).tracking(-7).contentTransition(.numericText())
             Label(weather.current.condition.title,systemImage:weather.current.condition.symbol).font(.system(size:20,weight:.light)).symbolRenderingMode(.hierarchical)
             Text("잠시 멈춰, 오늘의 하늘을 느껴보세요.").font(.system(size:12)).foregroundStyle(.white.opacity(0.65)).padding(.top,3)
         }.padding(.bottom,12)
         LiquidCard {
+            HStack(spacing:12) {
+                Image(systemName: umbrellaNeeded ? "umbrella.fill" : "sun.max.fill").foregroundStyle(.cyan)
+                VStack(alignment:.leading,spacing:4) {
+                    Text(rainPeak.map { "앞으로 6시간 강수확률 최고 \(Int($0.rounded()))%" } ?? "가까운 시간대 강수 예보").font(.subheadline.weight(.semibold))
+                    Text(umbrellaNeeded ? "가까운 시간에 비나 눈이 예상돼요. 우산을 챙기세요." : "가까운 시간대 강수 가능성이 낮아요.").font(.caption).foregroundStyle(.white.opacity(0.7))
+                }
+                Spacer(minLength:0)
+            }
+        }
+        LiquidCard {
             VStack(alignment:.leading,spacing:20) {
-                section("시간별 예보",symbol:"clock",trailing:"24시간 이내")
+                section("시간별 예보",symbol:"clock",trailing:"24시간 · 날짜별 3일")
                 ScrollView(.horizontal,showsIndicators:false) {
                     HStack(spacing:26) { ForEach(weather.hourly) { hour in
-                        VStack(spacing:12) { Text(hour.label).font(.system(size:12)).foregroundStyle(.white.opacity(0.65)); Image(systemName:hour.condition.symbol).symbolRenderingMode(.hierarchical).font(.system(size:23)).foregroundStyle(Color(red:0.77,green:0.93,blue:1)).frame(height:25); VStack(spacing:3) { Text(value(hour.temperature,"°")).font(.system(size:19)); Text(value(hour.precipitationProbability,"%")).font(.system(size:10)).foregroundStyle(.cyan.opacity(0.8)) } }
+                        VStack(spacing:7) {
+                            Text(hour.label).font(.system(size:12)).foregroundStyle(.white.opacity(0.65))
+                            Image(systemName:hour.condition.symbol).symbolRenderingMode(.hierarchical).font(.system(size:23)).foregroundStyle(Color(red:0.77,green:0.93,blue:1)).frame(height:25)
+                            Text(value(hour.temperature,"°")).font(.system(size:19))
+                            Text("비 \(value(hour.precipitationProbability,"%"))").font(.system(size:10)).foregroundStyle(.cyan.opacity(0.8))
+                            Text("습도 \(value(hour.humidity,"%"))").font(.system(size:9)).foregroundStyle(.white.opacity(0.6))
+                            Text("\(hour.windDirection ?? "바람") \(value(hour.windSpeed,"m/s"))").font(.system(size:9)).foregroundStyle(.white.opacity(0.6))
+                            if let amount = hour.precipitationAmount, amount != "없음" { Text("강수 \(amount)").font(.system(size:9)).foregroundStyle(.cyan) }
+                            if let snow = hour.snowAmount, snow != "없음" { Text("눈 \(snow)").font(.system(size:9)).foregroundStyle(.white.opacity(0.8)) }
+                            if let wave = hour.waveHeight { Text(String(format:"파고 %.1fm",wave)).font(.system(size:9)).foregroundStyle(.white.opacity(0.7)) }
+                            if hour.lightning == true { Text("낙뢰 가능성").font(.system(size:9)).foregroundStyle(.yellow) }
+                        }
                     } }
                 }
             }
         }
         LiquidCard {
             VStack(spacing:19) {
-                section("다가오는 날씨",symbol:"calendar",trailing:"예보 구간")
+                section("3일간 예보",symbol:"calendar",trailing:"기상청 최저·최고")
                 ForEach(weather.daily) { day in
                     HStack(spacing:12) {
                         Text(day.label).font(.system(size:15)).frame(width:45,alignment:.leading)
@@ -88,15 +113,19 @@ struct WeatherView: View {
                     }.font(.system(size:15))
                 }
                 Divider().overlay(.white.opacity(0.1))
-                Text("표시된 예보 시간대의 최저·최고 기온입니다.").font(.system(size:10)).foregroundStyle(.white.opacity(0.6))
+                Text(weather.isDemo ? "기온과 예보는 미리보기용 예시입니다." : "날짜별 기상청 최저·최고 기온 (제공되지 않으면 시간별 예보 범위)").font(.system(size:10)).foregroundStyle(.white.opacity(0.6))
             }
         }
         HStack(spacing:14) {
             metric("습도",symbol:"humidity",number:value(weather.current.humidity,"%"),caption:"공기 속 수분")
-            metric("바람",symbol:"wind",number:value(weather.current.windSpeed," m/s",decimals:1),caption:"현재 풍속")
+            metric("바람",symbol:"wind",number:value(weather.current.windSpeed," m/s",decimals:1),caption:"현재 \(weather.current.windDirection ?? "") \(weather.current.windDirectionDegrees.map { "\(Int($0.rounded()))°" } ?? "")")
         }
-        LiquidCard { HStack { Image(systemName:"umbrella").foregroundStyle(.cyan.opacity(0.8)); Text("최근 1시간 강수량").font(.subheadline); Spacer(); Text(value(weather.current.precipitation," mm",decimals:1)).font(.system(size:21,weight:.light)) } }
-        VStack(spacing:7) { Text(weather.isDemo ? "예시 데이터 · 실제 날씨가 아닙니다" : "기상청 제공 · \(WeatherSnapshot.kstLabel(weather.observedAt,format:"M/d HH:mm")) 관측 (KST)"); Text("아래로 당겨 새로고침").foregroundStyle(.white.opacity(0.35)) }.font(.system(size:10)).foregroundStyle(.white.opacity(0.6)).padding(.top,8)
+        LiquidCard { HStack { Image(systemName:"humidity.fill").foregroundStyle(.cyan.opacity(0.8)); Text("이슬점 · 기온과 습도로 계산").font(.subheadline); Spacer(); Text(value(weather.current.dewPoint,"°")).font(.system(size:21,weight:.light)) } }
+        LiquidCard { HStack { Image(systemName:"umbrella").foregroundStyle(.cyan.opacity(0.8)); VStack(alignment:.leading,spacing:4) { Text("최근 1시간 강수량").font(.subheadline); Text("현재 강수형태 · \(weather.current.precipitationType ?? "—")").font(.caption).foregroundStyle(.white.opacity(0.6)) }; Spacer(); Text(weather.current.precipitation ?? "—").font(.system(size:21,weight:.light)) } }
+        if weather.current.windEastWest != nil || weather.current.windNorthSouth != nil {
+            Text("바람 성분  동서 \(value(weather.current.windEastWest,"m/s",decimals:1))  ·  남북 \(value(weather.current.windNorthSouth,"m/s",decimals:1))").font(.system(size:10)).foregroundStyle(.white.opacity(0.55))
+        }
+        VStack(spacing:7) { Text(weather.isDemo ? "예시 데이터 · 실제 날씨가 아닙니다" : "기상청 제공 · \(WeatherSnapshot.kstLabel(weather.observedAt,format:"M/d HH:mm")) 관측 (KST)\(weather.forecastIssuedAt.map { " · 예보 \(WeatherSnapshot.kstLabel($0,format:"M/d HH:mm")) 발표" } ?? "")\(weather.ultraForecastIssuedAt.map { " · 초단기 \(WeatherSnapshot.kstLabel($0,format:"HH:mm")) 발표" } ?? "")"); Text("아래로 당겨 새로고침").foregroundStyle(.white.opacity(0.35)) }.font(.system(size:10)).foregroundStyle(.white.opacity(0.6)).padding(.top,8)
     }
     private func section(_ title:String,symbol:String,trailing:String) -> some View {
         HStack { Label(title,systemImage:symbol).font(.system(size:12)).foregroundStyle(.white.opacity(0.65)); Spacer(); Text(trailing).font(.system(size:10)).foregroundStyle(.white.opacity(0.4)) }

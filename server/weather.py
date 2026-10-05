@@ -46,6 +46,13 @@ def issue_times(now):
     return observation, forecast
 
 
+def ultra_issue_time(now):
+    """Most recent 30-minute ultra-short forecast, available 45 minutes later."""
+    available = now.astimezone(KST) - timedelta(minutes=45)
+    minute = 30 if available.minute >= 30 else 0
+    return available.replace(minute=minute, second=0, microsecond=0)
+
+
 def condition(sky, pty):
     if str(pty) in ("3", "7"):
         return "snow"
@@ -84,20 +91,47 @@ def fetch(operation, issue, nx, ny, key):
         raise WeatherError("기상청에 연결할 수 없어요. 잠시 뒤 다시 시도해 주세요.") from None
 
 
-def normalize(observations, forecasts, now, observed, issued):
+def normalize(observations, forecasts, now, observed, issued, ultra_forecasts=(), ultra_issued=None):
     obs = {row["category"]: row["obsrValue"] for row in observations}
     slots = defaultdict(dict)
     for row in forecasts:
         stamp = datetime.strptime(row["fcstDate"] + row["fcstTime"], "%Y%m%d%H%M").replace(tzinfo=KST)
         slots[stamp][row["category"]] = row["fcstValue"]
+    rapid_slots = defaultdict(dict)
+    for row in ultra_forecasts:
+        stamp = datetime.strptime(row["fcstDate"] + row["fcstTime"], "%Y%m%d%H%M").replace(tzinfo=KST)
+        rapid_slots[stamp][row["category"]] = row["fcstValue"]
     current_hour = now.astimezone(KST).replace(minute=0, second=0, microsecond=0)
+    def amount(value, unit):
+        if value is None or str(value) in ("-", ""):
+            return None
+        if str(value) in ("0", "0.0", "강수없음", "적설없음"):
+            return "없음"
+        numeric = number(value)
+        return f"{numeric:g}{unit}" if numeric is not None else str(value)
+
+    def direction(value):
+        degrees = number(value)
+        if degrees is None:
+            return None
+        return ("북", "북북동", "북동", "동북동", "동", "동남동", "남동", "남남동",
+                "남", "남남서", "남서", "서남서", "서", "서북서", "북서", "북북서")[int((degrees + 11.25) / 22.5) % 16]
+
     hours = []
     for stamp, values in sorted(slots.items()):
-        if stamp < current_hour or number(values.get("TMP")) is None:
+        rapid = rapid_slots.get(stamp, {})
+        temperature = number(rapid.get("T1H")) if rapid.get("T1H") is not None else number(values.get("TMP"))
+        if stamp < current_hour or temperature is None:
             continue
-        hours.append(dict(time=stamp.isoformat(), temperature=number(values.get("TMP")),
-                          condition=condition(values.get("SKY"), values.get("PTY")),
-                          precipitationProbability=number(values.get("POP"))))
+        pty, sky = rapid.get("PTY", values.get("PTY")), rapid.get("SKY", values.get("SKY"))
+        rain = rapid.get("RN1", values.get("PCP"))
+        hours.append(dict(time=stamp.isoformat(), temperature=temperature,
+                          condition=condition(sky, pty),
+                          precipitationProbability=number(values.get("POP")), humidity=number(rapid.get("REH", values.get("REH"))),
+                          windSpeed=number(rapid.get("WSD", values.get("WSD"))), windDirectionDegrees=number(rapid.get("VEC", values.get("VEC"))),
+                          windDirection=direction(rapid.get("VEC", values.get("VEC"))), precipitationAmount=amount(rain, "mm"),
+                          snowAmount=amount(values.get("SNO"), "cm"), waveHeight=number(values.get("WAV")),
+                          lightning=number(rapid.get("LGT")) is not None and number(rapid.get("LGT")) > 0))
     if number(obs.get("T1H")) is None or not hours:
         raise WeatherError("기상청 자료가 아직 완전하지 않아요. 잠시 뒤 새로고침해 주세요.")
     days = []
@@ -107,14 +141,22 @@ def normalize(observations, forecasts, now, observed, issued):
     for date, rows in by_day.items():
         temperatures = [r["temperature"] for r in rows]
         # Display honest remaining-forecast ranges, not invented daily extrema.
-        days.append(dict(date=date, low=min(temperatures), high=max(temperatures),
+        day_slots = [slot for stamp, slot in slots.items() if stamp.date().isoformat() == date]
+        official_low = next((number(slot.get("TMN")) for slot in day_slots if number(slot.get("TMN")) is not None), None)
+        official_high = next((number(slot.get("TMX")) for slot in day_slots if number(slot.get("TMX")) is not None), None)
+        days.append(dict(date=date, low=official_low if official_low is not None else min(temperatures),
+                         high=official_high if official_high is not None else max(temperatures),
                          condition=max(rows, key=lambda r: {"clear": 0, "cloudy": 1, "overcast": 2, "rain": 3, "sleet": 4, "snow": 5}[r["condition"]])["condition"],
                          precipitationProbability=max((r["precipitationProbability"] for r in rows if r["precipitationProbability"] is not None), default=None)))
     nearest = min(slots, key=lambda stamp: abs((stamp - now).total_seconds()))
     return dict(source="기상청", isDemo=False, observedAt=observed.isoformat(), forecastIssuedAt=issued.isoformat(),
+                ultraForecastIssuedAt=ultra_issued.isoformat() if ultra_issued else None,
                 fetchedAt=now.isoformat(), current=dict(temperature=number(obs.get("T1H")),
                 humidity=number(obs.get("REH")), windSpeed=number(obs.get("WSD")),
-                precipitation=number(obs.get("RN1")), condition=condition(slots[nearest].get("SKY"), obs.get("PTY"))),
+                windDirectionDegrees=number(obs.get("VEC")), windDirection=direction(obs.get("VEC")),
+                windEastWest=number(obs.get("UUU")), windNorthSouth=number(obs.get("VVV")),
+                precipitation=amount(obs.get("RN1"), "mm"), precipitationType={"0": "없음", "1": "비", "2": "비와 눈", "3": "눈", "4": "소나기", "5": "비", "6": "비와 눈", "7": "눈"}.get(str(obs.get("PTY", "0")), "없음"),
+                condition=condition(slots[nearest].get("SKY"), obs.get("PTY"))),
                 hourly=hours[:24], daily=days)
 
 
@@ -136,7 +178,12 @@ class WeatherService:
             observation, forecast = issue_times(now)
             observations = fetch("getUltraSrtNcst", observation, nx, ny, key)
             forecasts = fetch("getVilageFcst", forecast, nx, ny, key)
-            result = normalize(observations, forecasts, now, observation, forecast)
+            ultra_issued = ultra_issue_time(now)
+            try:
+                ultra_forecasts = fetch("getUltraSrtFcst", ultra_issued, nx, ny, key)
+            except WeatherError:
+                ultra_forecasts = []
+            result = normalize(observations, forecasts, now, observation, forecast, ultra_forecasts, ultra_issued if ultra_forecasts else None)
             if len(self.cache) >= 512:
                 self.cache.pop(next(iter(self.cache)))
             self.cache[nx, ny] = (time.monotonic(), result)

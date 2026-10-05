@@ -40,14 +40,59 @@ struct CurrentWeather: Codable {
     let temperature: Double?
     let humidity: Double?
     let windSpeed: Double?
-    let precipitation: Double?
+    let windDirectionDegrees: Double?
+    let windDirection: String?
+    let windEastWest: Double?
+    let windNorthSouth: Double?
+    let precipitation: String?
+    let precipitationType: String?
     let condition: Sky
+    var dewPoint: Double? {
+        guard let temperature, let humidity, humidity > 0, humidity <= 100 else { return nil }
+        let gamma = log(humidity / 100) + 17.625 * temperature / (243.04 + temperature)
+        return 243.04 * gamma / (17.625 - gamma)
+    }
+    init(temperature: Double?, humidity: Double?, windSpeed: Double?, windDirectionDegrees: Double? = nil, windDirection: String? = nil, windEastWest: Double? = nil, windNorthSouth: Double? = nil, precipitation: String?, precipitationType: String? = nil, condition: Sky) {
+        self.temperature = temperature; self.humidity = humidity; self.windSpeed = windSpeed
+        self.windDirectionDegrees = windDirectionDegrees; self.windDirection = windDirection
+        self.windEastWest = windEastWest; self.windNorthSouth = windNorthSouth
+        self.precipitation = precipitation; self.precipitationType = precipitationType; self.condition = condition
+    }
+    private enum CodingKeys: String, CodingKey { case temperature, humidity, windSpeed, windDirectionDegrees, windDirection, windEastWest, windNorthSouth, precipitation, precipitationType, condition }
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        temperature = try values.decodeIfPresent(Double.self, forKey: .temperature)
+        humidity = try values.decodeIfPresent(Double.self, forKey: .humidity)
+        windSpeed = try values.decodeIfPresent(Double.self, forKey: .windSpeed)
+        windDirectionDegrees = try values.decodeIfPresent(Double.self, forKey: .windDirectionDegrees)
+        windDirection = try values.decodeIfPresent(String.self, forKey: .windDirection)
+        windEastWest = try values.decodeIfPresent(Double.self, forKey: .windEastWest)
+        windNorthSouth = try values.decodeIfPresent(Double.self, forKey: .windNorthSouth)
+        precipitationType = try values.decodeIfPresent(String.self, forKey: .precipitationType)
+        condition = try values.decode(Sky.self, forKey: .condition)
+        if let text = try? values.decode(String.self, forKey: .precipitation) { precipitation = text }
+        else if let number = try? values.decode(Double.self, forKey: .precipitation) { precipitation = number == 0 ? "없음" : "\(number)mm" }
+        else { precipitation = nil }
+    }
 }
 struct HourWeather: Codable, Identifiable {
     let time: String
     let temperature: Double?
     let condition: Sky
     let precipitationProbability: Double?
+    let humidity: Double?
+    let windSpeed: Double?
+    let windDirectionDegrees: Double?
+    let windDirection: String?
+    let precipitationAmount: String?
+    let snowAmount: String?
+    let waveHeight: Double?
+    let lightning: Bool?
+    init(time: String, temperature: Double?, condition: Sky, precipitationProbability: Double?, humidity: Double? = nil, windSpeed: Double? = nil, windDirectionDegrees: Double? = nil, windDirection: String? = nil, precipitationAmount: String? = nil, snowAmount: String? = nil, waveHeight: Double? = nil, lightning: Bool? = nil) {
+        self.time = time; self.temperature = temperature; self.condition = condition; self.precipitationProbability = precipitationProbability
+        self.humidity = humidity; self.windSpeed = windSpeed; self.windDirectionDegrees = windDirectionDegrees; self.windDirection = windDirection
+        self.precipitationAmount = precipitationAmount; self.snowAmount = snowAmount; self.waveHeight = waveHeight; self.lightning = lightning
+    }
     var id: String { time }
     var label: String { WeatherSnapshot.kstLabel(time, format: "H시") }
 }
@@ -57,6 +102,9 @@ struct DayWeather: Codable, Identifiable {
     let high: Double?
     let condition: Sky
     let precipitationProbability: Double?
+    init(date: String, low: Double?, high: Double?, condition: Sky, precipitationProbability: Double?) {
+        self.date = date; self.low = low; self.high = high; self.condition = condition; self.precipitationProbability = precipitationProbability
+    }
     var id: String { date }
     var label: String { String(date.suffix(5)).replacingOccurrences(of: "-", with: "/") }
 }
@@ -64,9 +112,16 @@ struct WeatherSnapshot: Codable {
     let source: String
     let isDemo: Bool
     let observedAt: String
+    let forecastIssuedAt: String?
+    let ultraForecastIssuedAt: String?
+    let fetchedAt: String?
     let current: CurrentWeather
     let hourly: [HourWeather]
     let daily: [DayWeather]
+    init(source: String, isDemo: Bool, observedAt: String, current: CurrentWeather, hourly: [HourWeather], daily: [DayWeather], forecastIssuedAt: String? = nil, ultraForecastIssuedAt: String? = nil, fetchedAt: String? = nil) {
+        self.source = source; self.isDemo = isDemo; self.observedAt = observedAt; self.current = current
+        self.hourly = hourly; self.daily = daily; self.forecastIssuedAt = forecastIssuedAt; self.ultraForecastIssuedAt = ultraForecastIssuedAt; self.fetchedAt = fetchedAt
+    }
     static func kstLabel(_ string: String, format: String) -> String {
         let parser = ISO8601DateFormatter()
         parser.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -93,7 +148,7 @@ struct WeatherSnapshot: Codable {
             let stamp = formatter.string(from: now.addingTimeInterval(Double(i) * 86400))
             days.append(DayWeather(date: kstLabel(stamp, format: "yyyy-MM-dd"), low: Double(16+i), high: Double(23+i), condition: sky, precipitationProbability: sky.wet ? 80 : 10))
         }
-        let current = CurrentWeather(temperature: 21, humidity: 68, windSpeed: 2.4, precipitation: sky.wet ? 1.5 : 0, condition: sky)
+        let current = CurrentWeather(temperature: 21, humidity: 68, windSpeed: 2.4, precipitation: sky.wet ? "1.5mm" : "없음", condition: sky)
         return WeatherSnapshot(source: "디자인 미리보기", isDemo: true, observedAt: formatter.string(from: now), current: current, hourly: hours, daily: days)
     }
 }
@@ -151,17 +206,21 @@ enum DirectKMA {
         if theta > pi { theta -= 2 * pi }; if theta < -pi { theta += 2 * pi }; theta *= sn
         return (Int(floor(ra * sin(theta) + x0 + 0.5)), Int(floor(ro - ra * cos(theta) + y0 + 0.5)))
     }
-    static func issueTimes(now: Date) -> (Date, Date) {
+    static func issueTimes(now: Date) -> (Date, Date, Date) {
         var calendar = Calendar(identifier: .gregorian); calendar.timeZone = TimeZone(secondsFromGMT: 9 * 3600)!
         let c = calendar.dateComponents([.year,.month,.day,.hour,.minute], from: now)
-        let start = calendar.date(from: DateComponents(timeZone: TimeZone(secondsFromGMT: 0), year: c.year, month: c.month, day: c.day, hour: c.hour, minute: c.minute))!
+        let start = calendar.date(from: DateComponents(year: c.year, month: c.month, day: c.day, hour: c.hour, minute: c.minute))!
         let observation = calendar.date(bySetting: .minute, value: 0, of: start.addingTimeInterval(-40 * 60))!
         let eligible = start.addingTimeInterval(-10 * 60)
         let day = calendar.startOfDay(for: eligible)
         let forecastHours = [2,5,8,11,14,17,20,23]
         let forecast = forecastHours.compactMap { calendar.date(bySetting: .hour, value: $0, of: day) }.filter { $0 <= eligible }.last
             ?? calendar.date(bySetting: .hour, value: 23, of: calendar.date(byAdding: .day, value: -1, to: day)!)!
-        return (observation, forecast)
+        let ultraAvailable = start.addingTimeInterval(-45 * 60)
+        let ultraParts = calendar.dateComponents([.year,.month,.day,.hour,.minute], from: ultraAvailable)
+        let ultraMinute = (ultraParts.minute ?? 0) >= 30 ? 30 : 0
+        let ultra = calendar.date(from: DateComponents(year: ultraParts.year, month: ultraParts.month, day: ultraParts.day, hour: ultraParts.hour, minute: ultraMinute))!
+        return (observation, forecast, ultra)
     }
     static func iso(_ date: Date) -> String { let f = ISO8601DateFormatter(); f.timeZone = TimeZone(secondsFromGMT: 9 * 3600); f.formatOptions = [.withInternetDateTime]; return f.string(from: date) }
     static func number(_ value: Any?) -> Double? {
@@ -174,6 +233,19 @@ enum DirectKMA {
         if precipitation == 2 || precipitation == 6 { return .sleet }
         if precipitation == 3 || precipitation == 7 { return .snow }
         return code == 1 ? .clear : (code == 3 ? .cloudy : .overcast)
+    }
+    static func direction(_ raw: Any?) -> String? {
+        guard let degrees = number(raw) else { return nil }
+        let values = ["북","북북동","북동","동북동","동","동남동","남동","남남동","남","남남서","남서","서남서","서","서북서","북서","북북서"]
+        return values[Int((degrees + 11.25) / 22.5) % 16]
+    }
+    static func amount(_ raw: Any?, unit: String) -> String? {
+        guard let raw else { return nil }
+        let text = "\(raw)"
+        if text.isEmpty || text == "-" { return nil }
+        if ["0","0.0","강수없음","적설없음"].contains(text) { return "없음" }
+        if let value = number(raw) { return "\(value == floor(value) ? String(Int(value)) : String(value))\(unit)" }
+        return text
     }
     static func request(_ operation: String, key: String, issue: Date, grid: (Int,Int)) async throws -> [[String: Any]] {
         let f = DateFormatter(); f.timeZone = TimeZone(secondsFromGMT: 9 * 3600); f.dateFormat = "yyyyMMdd"; let date = f.string(from: issue)
@@ -197,7 +269,9 @@ enum DirectKMA {
         let now = Date(), times = issueTimes(now: now), grid = try grid(place.lat, place.lon)
         async let observedRows = request("getUltraSrtNcst", key:key, issue:times.0, grid:grid)
         async let forecastRows = request("getVilageFcst", key:key, issue:times.1, grid:grid)
+        async let rapidRows = request("getUltraSrtFcst", key:key, issue:times.2, grid:grid)
         let observations = try await observedRows, forecast = try await forecastRows
+        let rapid = (try? await rapidRows) ?? []
         let obs = Dictionary(uniqueKeysWithValues: observations.compactMap { row -> (String,Any)? in guard let k = row["category"] as? String, let v = row["obsrValue"] else { return nil }; return (k,v) })
         var slots: [Date:[String:Any]] = [:]
         let df = DateFormatter(); df.timeZone = TimeZone(secondsFromGMT: 9 * 3600); df.dateFormat = "yyyyMMddHHmm"
@@ -205,20 +279,37 @@ enum DirectKMA {
             guard let d = row["fcstDate"] as? String, let t = row["fcstTime"] as? String, let category = row["category"] as? String, let value = row["fcstValue"], let stamp = df.date(from:d + t) else { continue }
             slots[stamp, default:[:]][category] = value
         }
+        var rapidSlots: [Date:[String:Any]] = [:]
+        for row in rapid {
+            guard let d = row["fcstDate"] as? String, let t = row["fcstTime"] as? String, let category = row["category"] as? String, let value = row["fcstValue"], let stamp = df.date(from:d + t) else { continue }
+            rapidSlots[stamp, default:[:]][category] = value
+        }
         let hour = floor((now.timeIntervalSince1970 + 9 * 3600) / 3600) * 3600 - 9 * 3600
         let ordered = slots.keys.sorted().filter { $0.timeIntervalSince1970 >= hour && Self.number(slots[$0]?["TMP"]) != nil }
         guard let temperature = Self.number(obs["T1H"]), !ordered.isEmpty else { throw NSError(domain:"Weather",code:5,userInfo:[NSLocalizedDescriptionKey:"기상청 관측 자료가 아직 준비되지 않았어요. 잠시 뒤 다시 시도해 주세요."]) }
         let closest = slots.keys.min(by:{ abs($0.timeIntervalSince(now)) < abs($1.timeIntervalSince(now)) })!
-        let hours = ordered.prefix(24).compactMap { date -> HourWeather? in guard let row = slots[date], let temp = Self.number(row["TMP"]) else { return nil }; return HourWeather(time:Self.iso(date),temperature:temp,condition:Self.sky(row["SKY"],row["PTY"]),precipitationProbability:Self.number(row["POP"])) }
-        let grouped = Dictionary(grouping: hours) { String($0.time.prefix(10)) }
+        let allHours = ordered.compactMap { date -> HourWeather? in
+            guard let row = slots[date], let temp = Self.number(row["TMP"]) else { return nil }
+            let quick = rapidSlots[date] ?? [:]
+            let sky = quick["SKY"] ?? row["SKY"], pty = quick["PTY"] ?? row["PTY"]
+            let vector = quick["VEC"] ?? row["VEC"]
+            return HourWeather(time:Self.iso(date),temperature:Self.number(quick["T1H"]) ?? temp,condition:Self.sky(sky,pty),precipitationProbability:Self.number(row["POP"]),humidity:Self.number(quick["REH"]) ?? Self.number(row["REH"]),windSpeed:Self.number(quick["WSD"]) ?? Self.number(row["WSD"]),windDirectionDegrees:Self.number(vector),windDirection:Self.direction(vector),precipitationAmount:Self.amount(quick["RN1"] ?? row["PCP"],unit:"mm"),snowAmount:Self.amount(row["SNO"],unit:"cm"),waveHeight:Self.number(row["WAV"]),lightning:(Self.number(quick["LGT"]) ?? 0) > 0)
+        }
+        let hours = Array(allHours.prefix(24))
+        let grouped = Dictionary(grouping: allHours) { String($0.time.prefix(10)) }
         let severity: [Sky:Int] = [.clear:0,.cloudy:1,.overcast:2,.rain:3,.sleet:4,.snow:5]
         let days = grouped.keys.sorted().compactMap { date -> DayWeather? in
             guard let rows = grouped[date], !rows.isEmpty else { return nil }
             let temps = rows.compactMap(\.temperature), pops = rows.compactMap(\.precipitationProbability)
-            return DayWeather(date:date,low:temps.min(),high:temps.max(),condition:rows.map(\.condition).max(by:{severity[$0,default:0] < severity[$1,default:0]}) ?? .clear,precipitationProbability:pops.max())
+            let daySlots = slots.filter { Self.iso($0.key).hasPrefix(date) }.map(\.value)
+            let low = daySlots.compactMap { Self.number($0["TMN"]) }.first ?? temps.min()
+            let high = daySlots.compactMap { Self.number($0["TMX"]) }.first ?? temps.max()
+            return DayWeather(date:date,low:low,high:high,condition:rows.map(\.condition).max(by:{severity[$0,default:0] < severity[$1,default:0]}) ?? .clear,precipitationProbability:pops.max())
         }
-        let current = CurrentWeather(temperature:temperature,humidity:Self.number(obs["REH"]),windSpeed:Self.number(obs["WSD"]),precipitation:Self.number(obs["RN1"]),condition:Self.sky(slots[closest]?["SKY"],obs["PTY"] ?? slots[closest]?["PTY"]))
-        return WeatherSnapshot(source:"기상청",isDemo:false,observedAt:Self.iso(times.0),current:current,hourly:Array(hours),daily:days)
+        let pty = Int(Self.number(obs["PTY"]) ?? 0)
+        let precipType = [1,5].contains(pty) ? "비" : ([2,6].contains(pty) ? "비와 눈" : ([3,7].contains(pty) ? "눈" : (pty == 4 ? "소나기" : "없음")))
+        let current = CurrentWeather(temperature:temperature,humidity:Self.number(obs["REH"]),windSpeed:Self.number(obs["WSD"]),windDirectionDegrees:Self.number(obs["VEC"]),windDirection:Self.direction(obs["VEC"]),windEastWest:Self.number(obs["UUU"]),windNorthSouth:Self.number(obs["VVV"]),precipitation:Self.amount(obs["RN1"],unit:"mm"),precipitationType:precipType,condition:Self.sky(slots[closest]?["SKY"],obs["PTY"] ?? slots[closest]?["PTY"]))
+        return WeatherSnapshot(source:"기상청",isDemo:false,observedAt:Self.iso(times.0),current:current,hourly:hours,daily:days,forecastIssuedAt:Self.iso(times.1),ultraForecastIssuedAt:rapid.isEmpty ? nil : Self.iso(times.2),fetchedAt:Self.iso(now))
     }
 }
 

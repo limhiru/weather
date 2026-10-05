@@ -458,6 +458,27 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final weather = data;
     final hour = DateTime.now().toUtc().add(const Duration(hours: 9)).hour;
+    final rainChances =
+        weather?.hourly
+            .take(6)
+            .map((row) => row['precipitationProbability'])
+            .whereType<num>()
+            .toList() ??
+        <num>[];
+    final rainPeak = rainChances.isEmpty
+        ? null
+        : rainChances.reduce((a, b) => a > b ? a : b);
+    final rainSoon =
+        weather?.hourly
+            .take(6)
+            .any(
+              (row) =>
+                  const ['rain', 'snow', 'sleet'].contains(row['condition']) ||
+                  (row['precipitationAmount'] != null &&
+                      row['precipitationAmount'] != '없음'),
+            ) ??
+        false;
+    final umbrellaNeeded = (rainPeak ?? 0) >= 50 || rainSoon;
     return Scaffold(
       body: Stack(
         children: [
@@ -597,7 +618,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                           ),
                           const SizedBox(height: 10),
                           const Text(
-                            '서버를 연결하면 지금의 기온과\n시간별 예보를 함께 볼 수 있어요.',
+                            '기상청 인증키를 입력하면 지금의 기온과\n자세한 예보를 볼 수 있어요.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.white70,
@@ -657,15 +678,57 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                         style: TextStyle(color: Colors.white70, fontSize: 12),
                       ),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 22),
+                    LiquidPanel(
+                      child: Row(
+                        children: [
+                          Icon(
+                            umbrellaNeeded
+                                ? Icons.umbrella_rounded
+                                : Icons.wb_sunny_outlined,
+                            color: const Color(0xffb6e3fb),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  rainPeak == null
+                                      ? '가까운 시간대 강수 예보'
+                                      : '앞으로 6시간 강수확률 최고 ${rainPeak.round()}%',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  umbrellaNeeded
+                                      ? '가까운 시간에 비나 눈이 예상돼요. 우산을 챙기세요.'
+                                      : '가까운 시간대 강수 가능성이 낮아요.',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
                     LiquidPanel(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          sectionTitle(Icons.schedule, '시간별 예보', '24시간 이내'),
-                          const SizedBox(height: 20),
+                          sectionTitle(
+                            Icons.schedule,
+                            '시간별 예보',
+                            '24시간 · 날짜별 3일',
+                          ),
+                          const SizedBox(height: 18),
                           SizedBox(
-                            height: 116,
+                            height: 153,
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
                               itemCount: weather.hourly.length,
@@ -695,15 +758,60 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                                       style: const TextStyle(fontSize: 19),
                                     ),
                                     Text(
-                                      numberText(
-                                        row['precipitationProbability'],
-                                        '%',
-                                      ),
+                                      '비 ${numberText(row['precipitationProbability'], '%')}',
                                       style: const TextStyle(
                                         fontSize: 10,
                                         color: Color(0xffa4dffa),
                                       ),
                                     ),
+                                    Text(
+                                      '습도 ${numberText(row['humidity'], '%')}',
+                                      style: const TextStyle(
+                                        fontSize: 9,
+                                        color: Colors.white60,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${row['windDirection'] ?? '바람'} ${numberText(row['windSpeed'], 'm/s')}',
+                                      style: const TextStyle(
+                                        fontSize: 9,
+                                        color: Colors.white60,
+                                      ),
+                                    ),
+                                    if (row['precipitationAmount'] != null &&
+                                        row['precipitationAmount'] != '없음')
+                                      Text(
+                                        '강수 ${row['precipitationAmount']}',
+                                        style: const TextStyle(
+                                          fontSize: 9,
+                                          color: Color(0xffa4dffa),
+                                        ),
+                                      ),
+                                    if (row['snowAmount'] != null &&
+                                        row['snowAmount'] != '없음')
+                                      Text(
+                                        '눈 ${row['snowAmount']}',
+                                        style: const TextStyle(
+                                          fontSize: 9,
+                                          color: Color(0xffd8f5ff),
+                                        ),
+                                      ),
+                                    if (row['waveHeight'] is num)
+                                      Text(
+                                        '파고 ${(row['waveHeight'] as num).toStringAsFixed(1)}m',
+                                        style: const TextStyle(
+                                          fontSize: 9,
+                                          color: Color(0xffb8d3e0),
+                                        ),
+                                      ),
+                                    if (row['lightning'] == true)
+                                      const Text(
+                                        '낙뢰 가능성',
+                                        style: TextStyle(
+                                          fontSize: 9,
+                                          color: Color(0xffffd98e),
+                                        ),
+                                      ),
                                   ],
                                 );
                               },
@@ -718,8 +826,8 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                         children: [
                           sectionTitle(
                             Icons.calendar_today_outlined,
-                            '다가오는 날씨',
-                            '예보 구간',
+                            '3일간 예보',
+                            '기상청 최저·최고',
                           ),
                           const SizedBox(height: 12),
                           ...weather.daily.map((row) {
@@ -782,8 +890,10 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                             );
                           }),
                           const Divider(color: Colors.white12),
-                          const Text(
-                            '표시된 예보 시간대의 최저·최고 기온입니다.',
+                          Text(
+                            weather.isDemo
+                                ? '기온과 예보는 미리보기용 예시입니다.'
+                                : '날짜별 기상청 최저·최고 기온 (없으면 시간별 예보 범위)',
                             style: TextStyle(
                               fontSize: 10,
                               color: Colors.white60,
@@ -811,7 +921,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                             weather.current['windSpeed'] == null
                                 ? '—'
                                 : '${weather.current['windSpeed']} m/s',
-                            '현재 풍속',
+                            '현재 바람 ${weather.current['windDirection'] ?? ''} ${weather.current['windDirectionDegrees'] == null ? '' : '${(weather.current['windDirectionDegrees'] as num).round()}°'}',
                           ),
                         ),
                       ],
@@ -821,15 +931,37 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                       child: Row(
                         children: [
                           const Icon(
+                            Icons.water_drop_outlined,
+                            color: Color(0xffb6e3fb),
+                          ),
+                          const SizedBox(width: 14),
+                          const Expanded(child: Text('이슬점 · 기온과 습도로 계산')),
+                          Text(
+                            numberText(
+                              dewPointTemperature(weather.current),
+                              '°',
+                            ),
+                            style: const TextStyle(fontSize: 21),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    LiquidPanel(
+                      child: Row(
+                        children: [
+                          const Icon(
                             Icons.umbrella_outlined,
                             color: Color(0xffb6e3fb),
                           ),
                           const SizedBox(width: 14),
-                          const Expanded(child: Text('최근 1시간 강수량')),
+                          Expanded(
+                            child: Text(
+                              '최근 1시간 강수량 · ${weather.current['precipitationType'] ?? '—'}',
+                            ),
+                          ),
                           Text(
-                            weather.current['precipitation'] == null
-                                ? '—'
-                                : '${weather.current['precipitation']} mm',
+                            weather.current['precipitation']?.toString() ?? '—',
                             style: const TextStyle(fontSize: 21),
                           ),
                         ],
@@ -840,7 +972,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                       child: Text(
                         weather.isDemo
                             ? '예시 데이터 · 실제 날씨가 아닙니다'
-                            : '기상청 제공 · ${weather.updated} 관측 (KST)',
+                            : '기상청 제공 · ${weather.updated} 관측 (KST)${weather.json['forecastIssuedAt'] == null ? '' : ' · 예보 ${koreanTime(weather.json['forecastIssuedAt']).month}/${koreanTime(weather.json['forecastIssuedAt']).day} ${koreanTime(weather.json['forecastIssuedAt']).hour}시 발표'}',
                         style: const TextStyle(
                           fontSize: 11,
                           color: Colors.white60,
