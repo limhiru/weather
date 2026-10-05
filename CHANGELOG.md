@@ -1,5 +1,10 @@
 # 변경 기록
 
+## 1.0.10
+
+- Android 전체 글꼴을 Pretendard Variable로 변경해 iPhone San Francisco에 가까운 한글·숫자 인상을 적용.
+- Pretendard의 SIL Open Font License를 앱 라이선스 목록에 포함.
+
 ## 1.0.9
 
 - 디자인 미리보기 시간별 예시에도 습도·풍속·풍향을 표시.

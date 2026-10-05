@@ -4,7 +4,7 @@
 
 **Power by 기상청** · [기상청 단기예보 조회서비스](https://www.data.go.kr/data/15084084/openapi.do)
 
-- **Android:** Flutter / Dart, 흐린 유리 카드, Canvas 날씨·물방울 애니메이션
+- **Android:** Flutter / Dart, Pretendard Variable 글꼴, 흐린 유리 카드, Canvas 날씨·물방울 애니메이션
 - **iPhone:** Swift / SwiftUI, iOS 26+ 네이티브 Liquid Glass 컨트롤, iOS 17+ 반투명 머티리얼 대체 구현
 - **데이터:** 기상청 초단기실황·초단기예보 + 단기예보. 기기에서 직접 연결하거나 선택적으로 서버 사용
 - **화면:** 국내 12개 도시 검색, 현재 위치, 현재 기온, 6시간 갱신 초단기예보, 24시간 시간별·날짜별 예보(요일 포함), 습도, 풍향·풍속, 강수량·강수확률, 적설·파고·낙뢰(제공 시)
@@ -145,6 +145,7 @@ Xcode에서는 Product → Test로 KST 날짜 변환, 서버 주소 검증, 데�
 ## 디자인 참고와 출처
 
 - [Apple 날씨 앱](https://support.apple.com/guide/iphone/check-the-weather-iph1ac0b35f/ios)의 큰 기온 타이포그래피와 예보 정보 계층을 참고했습니다.
+- Android는 한글에 맞게 다듬어진 [Pretendard](https://github.com/orioncactus/pretendard)를 사용하고, iPhone은 Apple 플랫폼 시스템 글꼴인 San Francisco를 사용합니다. Pretendard는 SIL OFL 1.1로 배포됩니다.
 - [Apple Liquid Glass 문서](https://developer.apple.com/documentation/SwiftUI/Applying-Liquid-Glass-to-custom-views)를 따라 최신 iPhone에서 컨트롤에 네이티브 유리 효과를 적용합니다.
 - [Samsung One UI 모션 가이드](https://developer.samsung.com/one-ui/motion/basic.html)의 깊이감과 자연스러운 움직임을 참고했습니다. 하늘·물방울·비·눈은 이 프로젝트에서 코드로 직접 그립니다. Apple/Samsung 이미지나 앱 코드를 복제하지 않았습니다.
 - 실제 데이터 출처: [기상청 / 공공데이터포털](https://www.data.go.kr/data/15084084/openapi.do), 공공누리 제1유형 출처표시.

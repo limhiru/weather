@@ -28,7 +28,8 @@ class WeatherApp extends StatelessWidget {
         seedColor: const Color(0xffb1e8fc),
         brightness: Brightness.dark,
       ),
-      fontFamily: 'sans-serif',
+      fontFamily: 'Pretendard',
+      fontFamilyFallback: const ['sans-serif'],
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: Color(0xff193b54),
         showDragHandle: true,
