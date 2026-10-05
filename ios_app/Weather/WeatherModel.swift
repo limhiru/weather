@@ -146,10 +146,13 @@ struct WeatherSnapshot: Codable {
         let now = Date()
         let formatter = ISO8601DateFormatter()
         let temperatures: [Double] = [21,22,23,23,22,21,20,19,18,18,17,18]
+        let humidity: [Double] = [58,55,52,50,48,47,50,54,59,63,66,62]
+        let windSpeed: [Double] = [1.4,1.7,2.0,2.3,2.6,2.4,2.1,1.8,1.5,1.3,1.6,1.9]
+        let windDirection = ["북동","북동","동북동","동","동남동","동","남동","남","남남서","서남서","서","북서"]
         var hours: [HourWeather] = []
         for (i, temperature) in temperatures.enumerated() {
             let stamp = formatter.string(from: now.addingTimeInterval(Double(i) * 3600))
-            hours.append(HourWeather(time: stamp, temperature: temperature, condition: sky, precipitationProbability: sky.wet ? 80 : 10))
+            hours.append(HourWeather(time: stamp, temperature: temperature, condition: sky, precipitationProbability: sky.wet ? 80 : 10, humidity: humidity[i], windSpeed: windSpeed[i], windDirection: windDirection[i]))
         }
         var days: [DayWeather] = []
         for i in 0..<4 {

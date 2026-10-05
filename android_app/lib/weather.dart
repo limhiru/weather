@@ -80,6 +80,35 @@ class WeatherData {
       now.hour,
     ).subtract(const Duration(hours: 9));
     final temperatures = [21, 22, 23, 23, 22, 21, 20, 19, 18, 18, 17, 18];
+    const humidity = [58, 55, 52, 50, 48, 47, 50, 54, 59, 63, 66, 62];
+    const windSpeed = [
+      1.4,
+      1.7,
+      2.0,
+      2.3,
+      2.6,
+      2.4,
+      2.1,
+      1.8,
+      1.5,
+      1.3,
+      1.6,
+      1.9,
+    ];
+    const windDirection = [
+      '북동',
+      '북동',
+      '동북동',
+      '동',
+      '동남동',
+      '동',
+      '남동',
+      '남',
+      '남남서',
+      '서남서',
+      '서',
+      '북서',
+    ];
     return WeatherData({
       'isDemo': true,
       'source': '디자인 미리보기',
@@ -98,6 +127,9 @@ class WeatherData {
           'temperature': temperatures[i],
           'condition': condition,
           'precipitationProbability': condition == 'rain' ? 80 : 10,
+          'humidity': humidity[i],
+          'windSpeed': windSpeed[i],
+          'windDirection': windDirection[i],
         },
       ),
       'daily': List.generate(
