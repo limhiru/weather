@@ -104,6 +104,8 @@ git push
 
 ## 검증
 
+[검증 결과와 확인이 필요한 범위](docs/VERIFICATION.md)를 참고하세요.
+
 ```sh
 python3 -m unittest discover -s server/tests -v
 python3 scripts/version.py --check
