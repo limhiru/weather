@@ -1,0 +1,16 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+.venv/
+.build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+build/
+artifacts/
+*.keystore
+*.jks
+key.properties
