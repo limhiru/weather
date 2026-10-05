@@ -106,7 +106,15 @@ struct DayWeather: Codable, Identifiable {
         self.date = date; self.low = low; self.high = high; self.condition = condition; self.precipitationProbability = precipitationProbability
     }
     var id: String { date }
-    var label: String { String(date.suffix(5)).replacingOccurrences(of: "-", with: "/") }
+    var label: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "M/d EEE"
+        let parser = DateFormatter()
+        parser.locale = Locale(identifier: "en_US_POSIX")
+        parser.dateFormat = "yyyy-MM-dd"
+        return parser.date(from: date).map(formatter.string(from:)) ?? date
+    }
 }
 struct WeatherSnapshot: Codable {
     let source: String

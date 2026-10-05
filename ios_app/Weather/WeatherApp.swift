@@ -100,10 +100,10 @@ struct WeatherView: View {
         }
         LiquidCard {
             VStack(spacing:19) {
-                section("3일간 예보",symbol:"calendar",trailing:"기상청 최저·최고")
+                section("날짜별 예보",symbol:"calendar",trailing:"기상청 최저·최고")
                 ForEach(weather.daily) { day in
                     HStack(spacing:12) {
-                        Text(day.label).font(.system(size:15)).frame(width:45,alignment:.leading)
+                        Text(day.label).font(.system(size:13)).frame(width:76,alignment:.leading)
                         Image(systemName:day.condition.symbol).symbolRenderingMode(.hierarchical).foregroundStyle(.cyan.opacity(0.8)).frame(width:25)
                         Text(value(day.precipitationProbability,"%")).font(.system(size:10)).foregroundStyle(.cyan.opacity(0.8)).frame(width:30)
                         Spacer(minLength:0)

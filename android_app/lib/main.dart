@@ -826,7 +826,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                         children: [
                           sectionTitle(
                             Icons.calendar_today_outlined,
-                            '3일간 예보',
+                            '날짜별 예보',
                             '기상청 최저·최고',
                           ),
                           const SizedBox(height: 12),
@@ -837,9 +837,9 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                               child: Row(
                                 children: [
                                   SizedBox(
-                                    width: 43,
+                                    width: 69,
                                     child: Text(
-                                      '${date.month}/${date.day}',
+                                      '${date.month}/${date.day} ${['월', '화', '수', '목', '금', '토', '일'][date.weekday - 1]}',
                                       style: const TextStyle(fontSize: 15),
                                     ),
                                   ),
