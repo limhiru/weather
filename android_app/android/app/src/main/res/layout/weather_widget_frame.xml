@@ -1,0 +1,13 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:foregroundGravity="center">
+    <ImageView
+        android:id="@+id/widget_weather_frame_icon"
+        android:layout_width="38dp"
+        android:layout_height="38dp"
+        android:layout_gravity="center"
+        android:contentDescription="날씨"
+        android:scaleType="fitCenter"
+        android:src="@drawable/widget_sun" />
+</FrameLayout>

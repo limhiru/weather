@@ -334,6 +334,17 @@ enum WeatherWidgetCache {
         } else { defaults.removeObject(forKey: "widget.temperature") }
         defaults.set(weather.current.condition.rawValue, forKey: "widget.condition")
         defaults.set(weather.observedAt, forKey: "widget.updated")
+        defaults.set(place.lat, forKey: "widget.latitude")
+        defaults.set(place.lon, forKey: "widget.longitude")
+        let widgetHours: [[String: Any]] = weather.hourly.prefix(12).map { hour in
+            var row: [String: Any] = ["time": hour.time, "condition": hour.condition.rawValue]
+            if let temperature = hour.temperature { row["temperature"] = temperature }
+            if let probability = hour.precipitationProbability { row["precipitationProbability"] = probability }
+            return row
+        }
+        if let encodedHours = try? JSONSerialization.data(withJSONObject: widgetHours) {
+            defaults.set(encodedHours, forKey: "widget.hourly")
+        }
         WidgetCenter.shared.reloadAllTimelines()
     }
 }

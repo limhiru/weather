@@ -1,5 +1,11 @@
 # 변경 기록
 
+## 1.0.12
+
+- Android 및 iPhone 위젯에 시간별 날씨와 일출·일몰 시각 추가.
+- Android 날씨 아이콘 자동 전환과 iPhone 날씨 기호 전환 애니메이션 적용.
+- 앱과 GitHub 문구를 `기상청 제공`으로 정리.
+
 ## 1.0.11
 
 - Android의 Material 아이콘을 Cupertino 아이콘으로 교체해 iPhone 스타일로 통일.
@@ -54,7 +60,7 @@
 ## 1.0.2
 
 - 제공된 인증키를 로컬 서버에 연결하고 서울·부산 실황/예보의 실제 응답을 확인.
-- Android·iPhone 화면과 GitHub README에 `Power by 기상청` 표시.
+- Android·iPhone 화면과 GitHub README에 기상청 자료 출처 표시.
 - 개발 빌드는 로컬 날씨 서버를 기본 주소로 사용.
 
 ## 1.0.1

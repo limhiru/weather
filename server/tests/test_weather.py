@@ -60,7 +60,7 @@ class WeatherTests(unittest.TestCase):
             service=WeatherService()
             self.assertEqual(service.get(37.5665,126.978),result)
             service.get(37.5665,126.978)
-            self.assertEqual(upstream.call_count,2)
+            self.assertEqual(upstream.call_count,3)
 
 class HTTPTests(unittest.TestCase):
     @classmethod

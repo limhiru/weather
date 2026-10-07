@@ -1,12 +1,134 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    android:orientation="vertical" android:gravity="center_vertical"
-    android:padding="18dp" android:background="@drawable/weather_widget_bg">
-    <TextView android:id="@+id/widget_city" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="물결 날씨" android:textColor="#C9ECF8" android:textSize="14sp" />
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
-        <TextView android:id="@+id/widget_temp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--°" android:textColor="#FFFFFF" android:textSize="44sp" android:fontFamily="sans" android:includeFontPadding="false" />
-        <TextView android:id="@+id/widget_condition" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="14dp" android:text="오늘의 날씨" android:textColor="#FFFFFF" android:textSize="15sp" />
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="@drawable/weather_widget_bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="34dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/widget_city"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="물결 날씨"
+            android:textColor="#E3F7FF"
+            android:textSize="14sp"
+            android:fontFamily="sans" />
+        <AdapterViewFlipper
+            android:id="@+id/widget_weather_flipper"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:autoStart="true"
+            android:flipInterval="2200"
+            android:inAnimation="@android:anim/fade_in"
+            android:outAnimation="@android:anim/fade_out" />
+        <TextView
+            android:id="@+id/widget_weather_empty"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:gravity="center"
+            android:text="☀"
+            android:textColor="#FFE09A"
+            android:textSize="26sp" />
     </LinearLayout>
-    <TextView android:id="@+id/widget_updated" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Power by 기상청" android:textColor="#B8D3E0" android:textSize="10sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="38dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/widget_temp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:includeFontPadding="false"
+            android:text="—°"
+            android:textColor="#FFFFFF"
+            android:textSize="36sp"
+            android:fontFamily="sans" />
+        <TextView
+            android:id="@+id/widget_condition"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="9dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="오늘의 날씨"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/widget_updated"
+        android:layout_width="match_parent"
+        android:layout_height="16dp"
+        android:gravity="center_vertical"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="기상청 제공"
+        android:textColor="#B8D3E0"
+        android:textSize="9sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="5dp"
+        android:background="#55D9F1FF" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="14dp"
+        android:text="시간별 예보"
+        android:textColor="#D5F2FF"
+        android:textSize="10sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+            <TextView android:id="@+id/widget_hour_time_0" android:layout_width="wrap_content" android:layout_height="14dp" android:text="—" android:textColor="#C8E8F4" android:textSize="9sp" />
+            <ImageView android:id="@+id/widget_hour_icon_0" android:layout_width="19dp" android:layout_height="19dp" android:contentDescription="날씨" android:src="@drawable/widget_sun" />
+            <TextView android:id="@+id/widget_hour_temp_0" android:layout_width="wrap_content" android:layout_height="16dp" android:text="—°" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/widget_hour_pop_0" android:layout_width="wrap_content" android:layout_height="12dp" android:text="" android:textColor="#A9DDF4" android:textSize="7sp" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+            <TextView android:id="@+id/widget_hour_time_1" android:layout_width="wrap_content" android:layout_height="14dp" android:text="—" android:textColor="#C8E8F4" android:textSize="9sp" />
+            <ImageView android:id="@+id/widget_hour_icon_1" android:layout_width="19dp" android:layout_height="19dp" android:contentDescription="날씨" android:src="@drawable/widget_sun" />
+            <TextView android:id="@+id/widget_hour_temp_1" android:layout_width="wrap_content" android:layout_height="16dp" android:text="—°" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/widget_hour_pop_1" android:layout_width="wrap_content" android:layout_height="12dp" android:text="" android:textColor="#A9DDF4" android:textSize="7sp" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+            <TextView android:id="@+id/widget_hour_time_2" android:layout_width="wrap_content" android:layout_height="14dp" android:text="—" android:textColor="#C8E8F4" android:textSize="9sp" />
+            <ImageView android:id="@+id/widget_hour_icon_2" android:layout_width="19dp" android:layout_height="19dp" android:contentDescription="날씨" android:src="@drawable/widget_sun" />
+            <TextView android:id="@+id/widget_hour_temp_2" android:layout_width="wrap_content" android:layout_height="16dp" android:text="—°" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/widget_hour_pop_2" android:layout_width="wrap_content" android:layout_height="12dp" android:text="" android:textColor="#A9DDF4" android:textSize="7sp" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+            <TextView android:id="@+id/widget_hour_time_3" android:layout_width="wrap_content" android:layout_height="14dp" android:text="—" android:textColor="#C8E8F4" android:textSize="9sp" />
+            <ImageView android:id="@+id/widget_hour_icon_3" android:layout_width="19dp" android:layout_height="19dp" android:contentDescription="날씨" android:src="@drawable/widget_sun" />
+            <TextView android:id="@+id/widget_hour_temp_3" android:layout_width="wrap_content" android:layout_height="16dp" android:text="—°" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/widget_hour_pop_3" android:layout_width="wrap_content" android:layout_height="12dp" android:text="" android:textColor="#A9DDF4" android:textSize="7sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="18dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <TextView android:id="@+id/widget_sunrise" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="일출  --:--" android:textColor="#FFE6AD" android:textSize="9sp" />
+        <TextView android:id="@+id/widget_sunset" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" android:text="일몰  --:--" android:textColor="#FFD6C5" android:textSize="9sp" />
+    </LinearLayout>
 </LinearLayout>

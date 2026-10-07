@@ -27,7 +27,7 @@ struct WeatherView: View {
                     }
                     if let weather = store.weather { weatherContent(weather) }
                     else if !store.loading { welcome }
-                    Text("Power by 기상청").font(.system(size:11)).foregroundStyle(.white.opacity(0.65)).padding(.top,12)
+                    Text("기상청 제공").font(.system(size:11)).foregroundStyle(.white.opacity(0.65)).padding(.top,12)
                 }.padding(.horizontal,22).padding(.bottom,30)
             }.refreshable { await store.refresh() }
         }
@@ -174,7 +174,7 @@ struct SettingsSheet: View {
                 Section { ForEach(Sky.allCases,id:\.rawValue) { sky in Button { dismiss(); Task { await store.preview(sky) } } label: { Label(sky.title,systemImage:sky.symbol) } }
                     if store.demo != nil { Button("미리보기 종료") { dismiss(); Task { await store.preview(nil) } } }
                 } header: { Text("디자인 미리보기") } footer: { Text("미리보기의 날씨는 실제 관측값이 아닌 예시예요.") }
-                Section { LabeledContent("버전",value:Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"); Text("Power by 기상청 · 대한민국 단기예보").font(.footnote); Link("기상청 API 인증키 발급 안내",destination:URL(string:"https://www.data.go.kr/data/15084084/openapi.do")!) }
+                Section { LabeledContent("버전",value:Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"); Text("기상청 제공 · 대한민국 단기예보").font(.footnote); Link("기상청 API 인증키 발급 안내",destination:URL(string:"https://www.data.go.kr/data/15084084/openapi.do")!) }
             }.navigationTitle("설정").toolbar { ToolbarItem(placement:.topBarTrailing) { Button("완료") { dismiss() } } }.onAppear { endpoint = store.endpoint; apiKey = store.apiKey }
         }
     }

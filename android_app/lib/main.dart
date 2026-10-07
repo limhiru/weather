@@ -132,7 +132,10 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
         setState(() => data = result);
         final widgetData = <String, dynamic>{
           'city': place.name,
+          'latitude': place.lat,
+          'longitude': place.lon,
           'current': result.json['current'],
+          'hourly': result.hourly.take(12).toList(),
           'isDemo': result.isDemo,
         };
         try {
@@ -445,7 +448,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                   ),
                 const SizedBox(height: 22),
                 const Text(
-                  '물결 날씨 · $appVersion\nPower by 기상청 · 대한민국 단기예보',
+                  '물결 날씨 · $appVersion\n기상청 제공 · 대한민국 단기예보',
                   style: TextStyle(
                     color: Colors.white54,
                     fontSize: 12,
@@ -846,20 +849,22 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                               child: Row(
                                 children: [
                                   SizedBox(
-                                    width: 69,
+                                    width: 60,
                                     child: Text(
                                       '${date.month}/${date.day} ${['월', '화', '수', '목', '금', '토', '일'][date.weekday - 1]}',
-                                      style: const TextStyle(fontSize: 15),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 13),
                                     ),
                                   ),
                                   Icon(
                                     weatherIcon(row['condition']),
-                                    size: 21,
+                                    size: 18,
                                     color: const Color(0xffc5edff),
                                   ),
-                                  const SizedBox(width: 10),
+                                  const SizedBox(width: 6),
                                   SizedBox(
-                                    width: 31,
+                                    width: 28,
                                     child: Text(
                                       numberText(
                                         row['precipitationProbability'],
@@ -878,9 +883,9 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                                       color: Colors.white60,
                                     ),
                                   ),
-                                  const SizedBox(width: 10),
+                                  const SizedBox(width: 6),
                                   Container(
-                                    width: 16,
+                                    width: 12,
                                     height: 4,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(8),
@@ -892,7 +897,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 10),
+                                  const SizedBox(width: 6),
                                   Text(numberText(row['high'], '°')),
                                 ],
                               ),
@@ -999,7 +1004,7 @@ class _WeatherHomeState extends State<WeatherHome> with WidgetsBindingObserver {
                   const SizedBox(height: 20),
                   const Center(
                     child: Text(
-                      'Power by 기상청',
+                      '기상청 제공',
                       style: TextStyle(fontSize: 11, color: Colors.white60),
                     ),
                   ),
